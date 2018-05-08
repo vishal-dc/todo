@@ -4,6 +4,7 @@ var Users = Backbone.Collection.extend({
   });
 
 var UserList = Backbone.View.extend({
+    el: $('#userList'),
 
     // tagName: "li",
   
@@ -21,23 +22,28 @@ var UserList = Backbone.View.extend({
   
     render: function() {
         var users = new Users();
+        var that = this;
         users.fetch({
             success: function(users){
                 console.log(users);
+                var template = _.template($('#userListTemplate').html(),{users:users.models});
+                that.$el.html(template);
+                
             }
         });
       
     }
   
   });
+var userList = new UserList();
 var Router = Backbone.Router.extend({
 
     routes: {
       '': 'home',  
-      'about': 'about',    // #help
-      'users': 'users',  // #search/kiwis
+      'about': 'about',    
+      'users': 'users', 
       'users/:id': 'user',
-      'search/:query/p:page': 'search'   // #search/kiwis/p7
+      'search/:query/p:page': 'search'  
     },
 
     home: function(){
@@ -54,7 +60,7 @@ var Router = Backbone.Router.extend({
 
     users: function() {
         console.log('In users');
-        new UserList().render();        
+        userList.render();        
     },
 
     user: function(id) {
