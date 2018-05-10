@@ -1,7 +1,50 @@
 "use strict";
 $(function(){
+
+    function noop(){};
+    function tryCatch(fn, ctx, params, success, error){
+
+        error = error || noop;
+        success = success || noop;
+        try{
+            fn.call(ctx, params);
+        }catch(e){            
+            console.error('error during sync', arguments);
+        }
+    }
+    function createLocalStorageSyncFn(key){
+        return function syncTolocalStorage(method, model, options) {            
+                try{
+
+                    switch(method) {
+                        case 'read':
+                            var data = JSON.parse(localStorage.getItem(key));
+                            model.set(data);     
+                            options.success(data);               
+                            break;
+                        case 'update':
+                        case 'create':
+                            localStorage.setItem(key, JSON.stringify(model.toJSON()));
+                            break;
+                        case 'delete':
+                            localStorage.setItem(key, null)
+                        }
+   
+                }catch(e){
+                    options.error();
+                    console.error('error during sync', arguments);
+                }
+            };
+    }
+
+    
+
+
+
     var Users = Backbone.Collection.extend({
-        url: 'data/users.json'
+        url: 'data/users.json',
+        sync: createLocalStorageSyncFn('users')
+
     });
 
     var UsersView = Backbone.View.extend({
@@ -28,7 +71,8 @@ $(function(){
                 success: function(users){
                     console.log(users);                    
                     that.$el.html(that.template({users:users.models}));                    
-                }
+                },
+                reset:true
             });
             return this;
         }
@@ -39,15 +83,16 @@ $(function(){
 
         initialize: function () {
             Backbone.history.start({pushState: false});
-            this.on('route', function(route, params){
-                console.log("test");
+            // this.on('route', function(route, params){
+            //     console.log("Changing route");
               
-              });
+            //   });
         },
 
         execute: function(callback, args, name) {                     
             if (callback) {
                 //TODO use view.close/remove
+                console.log("Clear Main View");
                 $( "#main-view" ).empty();
                 callback.apply(this, args);
             }else{
@@ -97,6 +142,14 @@ $(function(){
           
     /** */
     new Router();
-  
+    
+    $.get( "/data/users.json")
+        .done(function(data) {          
+          localStorage.setItem('users', JSON.stringify(data));
+        })
+        .fail(function() {
+          alert( "error" );
+        });
+       
     
   });
