@@ -54,7 +54,11 @@
           <hr />
         </form>
     </script>
-
+    <script type="text/template"  id="errors-template" >
+      <% _.each(errors, function(error){ %>
+        <div class="alert alert-danger"><%= error.message %> </div>
+      <% }); %>
+    </script>
     <script type="text/template"  id="users-template" >
 
     <table class="table table-striped">
@@ -90,6 +94,8 @@
         </tbody>
       </table>
     </script>
+    <div id="errors-pane" class="pull-right">
+          </div>
     <div class="container">
       <div class="header">
         <ul class="nav nav-pills float-right">
@@ -104,11 +110,10 @@
           </li>          
         </ul>
         <h3 class="text-muted">My Todo App - Backbone.js</h3>
-        <hr/>
-          <div id="main-view"/>
-        <hr/>
+          <hr/>
+
       </div>
-    
+      <div id="main-view"/>
     </div>
     
     <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. 

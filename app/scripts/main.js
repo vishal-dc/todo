@@ -41,13 +41,15 @@ $(function(){
                     switch(method) {
                         case 'read':
                             if(model.id){
-                                model.set(db[key][model.id]);
-                            }else{
-                                model = JSON.parse(localStorage.getItem(key));    
-                                if(model)
-                                    db[key] = model;                        
+                                var data = db[key].find(obj => obj.id == model.id) ;                                
+                                if(data) 
+                                    model.set(data);                                
                                 else
-                                    model = [];
+                                    throw "Data not found for key: "+key + " id: "+ model.id;
+                            }else{
+                                model = JSON.parse(localStorage.getItem(key)) || [];    
+                                db[key] = model;                        
+                               
                             }                            
                             break;
                         case 'update':
@@ -57,13 +59,12 @@ $(function(){
                         case 'create':
                             var idCounter = Number(localStorage.getItem(key+'Counter'));
                             model.set('id', idCounter);
-                            db[key].push(model.toJSON());
-                            // db[key][idCounter].id=idCounter;
+                            db[key].push(model.toJSON());                            
                             localStorage.setItem(key+'Counter', idCounter+1);                                                        
                             localStorage.setItem(key, JSON.stringify(db[key]));                            
                             break;
                         case 'delete':
-                            db[key].splice(model.id, 1) ;
+                            db[key] =  db[key].filter(obj => obj.id !== model.id ) ;
                             localStorage.setItem(key, JSON.stringify(db[key])); 
                         }
                         options.success(model || {});               
@@ -112,10 +113,34 @@ $(function(){
     
     });
 
-    
+    var ErrorsView = Backbone.View.extend({
+        el: '#errors-pane',
+        template: _.template($('#errors-template').html()),
+        initialize: function(){
+            var that = this;
+            setTimeout(() => {
+                that.remove();
+            }, 3000);
+
+        },
+
+        render: function(options){
+            this.$el.html(this.template({errors:options.errors}));
+        }
+    });
+       
+    var errorsView  = new ErrorsView();
+
     var User = Backbone.Model.extend({
         url: 'data/users',
-        sync: createLocalStorageSyncFn('users')
+        sync: createLocalStorageSyncFn('users'),
+
+        initialize: function(){
+            this.on('error', function(model){
+                console.log("error occurred");
+                errorsView.render({errors:[{message: 'Error in model sync id: '+model.id}]});
+            });
+        }
 
     });
 
