@@ -29,7 +29,7 @@ $(function(){
       };
 
     if(!localStorage.getItem('usersCounter'))
-        localStorage.setItem('usersCounter', 1);
+        localStorage.setItem('usersCounter', 0);
 
     var db = {};
     db.users = [];    
@@ -40,12 +40,19 @@ $(function(){
 
                     switch(method) {
                         case 'read':
-                            model = JSON.parse(localStorage.getItem(key));    
-                            db[key] = model;                        
+                            if(model.id){
+                                model.set(db[key][model.id]);
+                            }else{
+                                model = JSON.parse(localStorage.getItem(key));    
+                                if(model)
+                                    db[key] = model;                        
+                                else
+                                    model = [];
+                            }                            
                             break;
                         case 'update':
-
-                            localStorage.setItem(key, JSON.stringify(model.toJSON()));
+                            db[key][model.id] = model.toJSON();
+                            localStorage.setItem(key, JSON.stringify(db[key])); 
                             break;
                         case 'create':
                             var idCounter = Number(localStorage.getItem(key+'Counter'));
@@ -56,7 +63,8 @@ $(function(){
                             localStorage.setItem(key, JSON.stringify(db[key]));                            
                             break;
                         case 'delete':
-                            localStorage.setItem(key, null)
+                            db[key].splice(model.id, 1) ;
+                            localStorage.setItem(key, JSON.stringify(db[key])); 
                         }
                         options.success(model || {});               
    
@@ -115,11 +123,23 @@ $(function(){
         el: '#main-view',
         template: _.template($('#user-template').html()),
         events: {
-          "submit .edit-user-form": "saveUser"
+          "submit .edit-user-form": "saveUser",
+          "click .delete": "deleteUser",
         },
     
-        render: function() {            
-            this.$el.html(this.template({user:null}));
+        render: function(options) {            
+            var that = this;
+            if(options.id){
+                that.user = new User({id:options.id});
+                that.user.fetch({
+                    success: function(user){
+                        that.$el.html(that.template({user:user}));
+                    }
+                });
+
+            }else{                
+                this.$el.html(this.template({user:null}));
+            }          
 
             return this;
         },
@@ -128,6 +148,15 @@ $(function(){
             var userDetails = $(event.currentTarget).serializeObject();
             var user = new User();
             user.save(userDetails, {
+                success: function(){
+                    router.navigate('#users', {trigger: true});
+                }
+            });
+            return false;
+        },
+
+        deleteUser : function(event){
+            this.user.destroy({
                 success: function(){
                     router.navigate('#users', {trigger: true});
                 }
@@ -191,7 +220,7 @@ $(function(){
         user: function(id) {
             
             console.log('In user for id: ', id);
-            userView.render();
+            userView.render({id:id});
         }
 
     }); 
@@ -202,13 +231,13 @@ $(function(){
     /** */
     var router = new Router();
     
-    $.get( "/data/users.json")
-        .done(function(data) {          
-          localStorage.setItem('users', JSON.stringify(data));
-        })
-        .fail(function() {
-          alert( "error" );
-        });
+    // $.get( "/data/users.json")
+    //     .done(function(data) {          
+    //       localStorage.setItem('users', JSON.stringify(data));
+    //     })
+    //     .fail(function() {
+    //       alert( "error" );
+    //     });
        
 
     
