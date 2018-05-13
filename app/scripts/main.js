@@ -79,24 +79,21 @@ $(function(){
 
     var Users = Backbone.Collection.extend({
         url: 'data/users',
-        sync: createLocalStorageSyncFn('users')
+        sync: createLocalStorageSyncFn('users'),
+
+        initialize: function(){
+            this.on('error', function(model){
+                console.log("error occurred");
+                errorsView.render({errors:[{message: 'Error in model sync collection '+ 'users'}]});
+            });
+        }
 
     });
 
 
     var UsersView = Backbone.View.extend({
         el: '#main-view',
-        template: _.template($('#users-template').html()),
-        // tagName: "li",
-    
-        // className: "document-row",
-    
-        // events: {
-        //   "click .icon":          "open",
-        //   "click .button.edit":   "openEditDialog",
-        //   "click .button.delete": "destroy"
-        // },
-    
+        template: _.template($('#users-template').html()),         
 
         render: function() {
             var users = new Users();

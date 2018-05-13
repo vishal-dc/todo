@@ -1,2 +1,2 @@
-# todo
-sample todo app using backbonejs
+# user manager
+sample user manager app using backbonejs
